@@ -25,7 +25,7 @@ export function ImageClassifier() {
       const form = new FormData();
       form.append('file', imageFile);
 
-      const resp = await fetch('http://localhost:8000/predict', {
+      const resp = await fetch('/predict', {
         method: 'POST',
         body: form,
       });
