@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Upload, Loader2, Image as ImageIcon, Sparkles } from 'lucide-react';
-//import * as mobilenet from '@tensorflow-models/mobilenet';
-//import '@tensorflow/tfjs';
 
 interface Prediction {
   className: string;
@@ -9,29 +7,44 @@ interface Prediction {
 }
 
 export function ImageClassifier() {
-  const [model, setModel] = useState<mobilenet.MobileNet | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [predicting, setPredicting] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
-    // Load the model when component mounts
-    loadModel();
+    // No client-side model — uses server for inference
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const loadModel = async () => {
+  const classifyImage = async () => {
+    if (!imageFile) return;
+
+    setPredicting(true);
     try {
-      const loadedModel = await mobilenet.load();
-      setModel(loadedModel);
-      setLoading(false);
+      const form = new FormData();
+      form.append('file', imageFile);
+
+      const resp = await fetch('http://localhost:8000/predict', {
+        method: 'POST',
+        body: form,
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(`Server error: ${resp.status} ${text}`);
+      }
+
+      const data = await resp.json();
+      // Expecting { predictions: [{className, probability}, ...] }
+      setPredictions(data.predictions || []);
     } catch (error) {
-      console.error('Error loading model:', error);
-      setLoading(false);
+      console.error('Error classifying image:', error);
     }
+    setPredicting(false);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,23 +54,12 @@ export function ImageClassifier() {
       reader.onload = (event) => {
         setImage(event.target?.result as string);
         setPredictions([]);
+        setImageFile(file);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const classifyImage = async () => {
-    if (!model || !imageRef.current) return;
-
-    setPredicting(true);
-    try {
-      const predictions = await model.classify(imageRef.current);
-      setPredictions(predictions);
-    } catch (error) {
-      console.error('Error classifying image:', error);
-    }
-    setPredicting(false);
-  };
 
   const handleUploadClick = () => {
     fileInputRef.current?.click();
