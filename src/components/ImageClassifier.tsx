@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Upload, Loader2, Image as ImageIcon, Sparkles } from 'lucide-react';
 
 interface Prediction {
@@ -7,7 +7,7 @@ interface Prediction {
 }
 
 export function ImageClassifier() {
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [predicting, setPredicting] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [predictions, setPredictions] = useState<Prediction[]>([]);
@@ -15,10 +15,7 @@ export function ImageClassifier() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
-  useEffect(() => {
-    // No client-side model — uses server for inference
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+
 
   const classifyImage = async () => {
     if (!imageFile) return;
@@ -32,6 +29,9 @@ export function ImageClassifier() {
         method: 'POST',
         body: form,
       });
+      
+      console.log("Status:", resp.status);
+
 
       if (!resp.ok) {
         const text = await resp.text();
@@ -39,6 +39,7 @@ export function ImageClassifier() {
       }
 
       const data = await resp.json();
+      console.log("API response:", data);
       // Expecting { predictions: [{className, probability}, ...] }
       setPredictions(data.predictions || []);
     } catch (error) {
