@@ -35,16 +35,21 @@ CLASS_NAMES = [
     "Yellow Mite",                   # 16
 ]
 
+origins = [
+    "https://pleasing-dream-production.up.railway.app",  # frontend
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "https://plant-pest-classifier-production.up.railway.app"
-    ],
-    allow_credentials=False,
+    allow_origins=origins,
+    allow_credentials=False,  # IMPORTANT
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # Attempt to locate model file in repo: ../model/mobilenet_v2_pure.pth
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
