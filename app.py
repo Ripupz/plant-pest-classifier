@@ -31,19 +31,12 @@ CLASS_NAMES = [
     "Yellow Mite",                   # 16
 ]
 
-# Allow CORS for local frontend (vite typically runs on 5173)
-origins = [
-    "http://localhost",
-    "http://localhost:5173",
-    "http://127.0.0.1",
-    "http://127.0.0.1:5173",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-    "https://plant-pest-classifier-production.up.railway.app"
-]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "http://localhost:5173",
+        "https://plant-pest-classifier-production.up.railway.app"
+    ],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
