@@ -35,7 +35,7 @@ env/
 # Uncomment ONE of the option to ignore
 
 # Option A: commit model
-# backend/model/*.pth
+backend/
 
 # Option B: ignore model (recommended if >100MB)
 # backend/model/*.pth
