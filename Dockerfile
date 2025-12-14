@@ -1,5 +1,5 @@
-# Build stage
-FROM node:18 AS build
+FROM node:18
+
 WORKDIR /app
 
 COPY package*.json ./
@@ -8,11 +8,7 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Serve the built Vite app
+RUN npm install -g serve
 
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 8080
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["sh", "-c", "serve -s dist -l $PORT"]
