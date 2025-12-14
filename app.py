@@ -8,6 +8,10 @@ import torch
 import torchvision.transforms as transforms
 import torchvision.models as models
 import torch.nn.functional as F
+import numpy as np
+
+print("NumPy version:", np.__version__)
+
 
 app = FastAPI(title="Plant Pest Classifier API")
 
