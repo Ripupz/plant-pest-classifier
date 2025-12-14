@@ -25,7 +25,7 @@
         const form = new FormData();
         form.append('file', imageFile);
 
-        const API_URL = "https://reasonable-adaptation-production.up.railway.app"
+        const API_URL = "https://plant-pest-classifier-production.up.railway.app"
         
         const resp = await fetch(`${API_URL}/predict`, {
           method: 'POST',
