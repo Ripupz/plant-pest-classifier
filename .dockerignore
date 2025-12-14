@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Environments
+venv/
+.env
+
+# Node (CRITICAL)
+node_modules/
+dist/
+
+# Data / training (CRITICAL)
+data/
+dataset/
+datasets/
+train/
+training/
+images/
+*.jpg
+*.png
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
+
+# OS
+.DS_Store
