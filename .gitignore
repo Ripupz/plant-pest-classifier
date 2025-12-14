@@ -1,3 +1,2 @@
 # Ignore everything except the backend folder
-/*
-!/backend/
+docker-compose.yml
