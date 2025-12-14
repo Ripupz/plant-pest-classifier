@@ -25,8 +25,8 @@
         const form = new FormData();
         form.append('file', imageFile);
 
-        const API_URL = import.meta.env.VITE_BACKEND_URL;
-
+        const API_URL = "https://reasonable-adaptation-production.up.railway.app"
+        
         const resp = await fetch(`${API_URL}/predict`, {
           method: 'POST',
           body: form,
