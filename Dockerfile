@@ -1,9 +1,7 @@
-
 # =========================
 # 1. Frontend build stage
 # =========================
-# Build stage
-FROM node:18 AS build
+FROM node:18 AS frontend-build
 WORKDIR /app
 
 COPY package*.json ./
@@ -12,16 +10,9 @@ RUN npm install
 COPY . .
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
-
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-EXPOSE 8080
 
 # =========================
-# 2. Backend + Nginx runtime
+# 2. Runtime: Backend + Nginx
 # =========================
 FROM python:3.10-slim
 
@@ -40,13 +31,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Backend source
 COPY backend ./backend
 
-# Frontend build output
-COPY --from=frontend-build /app/frontend/dist /usr/share/nginx/html
+# Frontend build output (from stage 1)
+COPY --from=frontend-build /app/dist /usr/share/nginx/html
 
 # Nginx config
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Railway provides PORT automatically
+# Railway provides PORT
 EXPOSE $PORT
 
 # Start backend + nginx
