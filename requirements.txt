@@ -1,9 +1,7 @@
 fastapi
-uvicorn[standard]
-python-multipart
+uvicorn
+numpy
 pillow
-torch
-torchvision
-numpy==1.26.4
-torch==2.1.0+cpu
-torchvision==0.16.0+cpu
+opencv-python-headless
+scikit-image
+xgboost
