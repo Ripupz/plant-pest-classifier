@@ -1,3 +1,4 @@
 # Ignore everything except the backend folder
 docker-compose.yml
 node_modules
+__pycache__

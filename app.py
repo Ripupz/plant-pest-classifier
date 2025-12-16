@@ -32,11 +32,23 @@ model = xgb.Booster()
 model.load_model("model/jute_pest_robust.json")
 
 CLASS_NAMES = [
-    "Healthy",
-    "Hairy Caterpillar",
-    "Jute Semilooper",
-    "Red Mite",
-    "Yellow Mite"
+    "Beet Armyworm",                 # 0
+    "Black Hairy",                   # 1
+    "Cutworm",                       # 2
+    "Field Cricket",                 # 3
+    "Jute Aphid",                    # 4
+    "Jute Hairy",                    # 5
+    "Jute Red Mite",                 # 6
+    "Jute Semilooper",               # 7
+    "Jute Stem Girdler",             # 8
+    "Jute Stem Weevil",              # 9
+    "Leaf Beetle",                   # 10
+    "Mealybug",                      # 11
+    "Pod Borer",                     # 12
+    "Scopula Emissaria",             # 13
+    "Termite odontotermes (Rambur)", # 14
+    "Termite",                       # 15
+    "Yellow Mite",                   # 16
 ]
 
 # =========================
