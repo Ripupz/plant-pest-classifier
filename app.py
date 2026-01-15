@@ -27,6 +27,7 @@ MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model', 'mobilenet_v2_pure
 
 @st.cache_resource
 def load_model_streamlit(path):
+    # 1. Inisialisasi Arsitektur Standar
     model = models.mobilenet_v2(weights=None)
     model.classifier[1] = torch.nn.Linear(1280, NUM_CLASSES)
     
@@ -34,22 +35,29 @@ def load_model_streamlit(path):
         return None
 
     try:
-        # Gunakan weights_only=False jika model disimpan dengan cara lama
+        # 2. Load state_dict
         state_dict = torch.load(path, map_location=DEVICE, weights_only=False)
         
-        # Bersihkan prefix 'module.'
-        if isinstance(state_dict, dict):
-            new_state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
-            # Pastikan mengambil state_dict jika dibungkus dalam dictionary lain
-            if 'state_dict' in new_state_dict:
-                new_state_dict = new_state_dict['state_dict']
+        # 3. Perbaikan Nama Layer (Remapping)
+        new_state_dict = {}
+        for k, v in state_dict.items():
+            # Hapus prefix 'module.' jika ada
+            name = k.replace('module.', '')
+            
+            # FIX: Ubah 'classifier.1.1' menjadi 'classifier.1' agar cocok dengan arsitektur
+            # Ini menangani error "Missing key classifier.1.weight"
+            name = name.replace('classifier.1.1.', 'classifier.1.')
+            
+            new_state_dict[name] = v
         
+        # 4. Load ke model dengan strict=True untuk memastikan kecocokan
         model.load_state_dict(new_state_dict, strict=True)
+        
         model.to(DEVICE)
         model.eval()
         return model
     except Exception as e:
-        st.error(f"⚠️ Error Load Model: {e}")
+        st.error(f"⚠️ Gagal memuat bobot model: {e}")
         return None
 
 # --- PREPROCESSING (Sesuai Training Pipeline) ---
