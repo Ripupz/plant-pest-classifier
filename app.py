@@ -2,17 +2,16 @@ import streamlit as st
 from PIL import Image
 import io
 import os
-import re
 import torch
 import torchvision.transforms as transforms
 import torchvision.models as models
 import torch.nn.functional as F
-import numpy as np
 
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="Plant Pest Classifier", page_icon="🌿")
 
 # --- DAFTAR NAMA KELAS ---
+# PENTING: Urutan ini harus sama persis dengan urutan folder saat training (Alfabetis)
 CLASS_NAMES = [
     "Beet Armyworm", "Black Hairy", "Cutworm", "Field Cricket",
     "Jute Aphid", "Jute Hairy", "Jute Red Mite", "Jute Semilooper",
@@ -22,12 +21,11 @@ CLASS_NAMES = [
 ]
 NUM_CLASSES = len(CLASS_NAMES)
 
-# --- KONFIGURASI PERANGKAT & MODEL ---
+# --- KONFIGURASI PERANGKAT ---
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-MODEL_PATH = os.path.join(BASE_DIR, 'model', 'mobilenet_v2_pure.pth')
+MODEL_PATH = os.path.join(os.path.dirname(__file__), 'model', 'mobilenet_v2_pure.pth')
 
-@st.cache_resource # Gunakan cache agar model tidak dimuat ulang setiap kali user klik tombol
+@st.cache_resource
 def load_model_streamlit(path):
     model = models.mobilenet_v2(weights=None)
     model.classifier[1] = torch.nn.Linear(1280, NUM_CLASSES)
@@ -36,70 +34,75 @@ def load_model_streamlit(path):
         return None
 
     try:
-        checkpoint = torch.load(path, map_location=DEVICE, weights_only=False)
-        state = checkpoint.get('state_dict', checkpoint)
+        # Gunakan weights_only=False jika model disimpan dengan cara lama
+        state_dict = torch.load(path, map_location=DEVICE, weights_only=False)
         
-        # Pembersihan key 'module.'
-        new_state = {k.replace('module.', ''): v for k, v in state.items()}
+        # Bersihkan prefix 'module.'
+        if isinstance(state_dict, dict):
+            new_state_dict = {k.replace('module.', ''): v for k, v in state_dict.items()}
+            # Pastikan mengambil state_dict jika dibungkus dalam dictionary lain
+            if 'state_dict' in new_state_dict:
+                new_state_dict = new_state_dict['state_dict']
         
-        # Mencoba load model
-        try:
-            model.load_state_dict(new_state)
-        except:
-            model.load_state_dict(new_state, strict=False)
-            
+        model.load_state_dict(new_state_dict, strict=True)
         model.to(DEVICE)
         model.eval()
         return model
     except Exception as e:
-        st.error(f"Gagal memuat model: {e}")
+        st.error(f"⚠️ Error Load Model: {e}")
         return None
 
-# --- PREPROCESSING ---
-
+# --- PREPROCESSING (Sesuai Training Pipeline) ---
 mean = [0.485, 0.456, 0.406]
 std  = [0.229, 0.224, 0.225]
-
 PREPROCESS = transforms.Compose([
-    transforms.Resize((224, 224)), # Samakan dengan training: Resize langsung ke 224x224
+    transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean, std)
 ])
 
-# --- ANTARMUKA PENGGUNA (UI) ---
-st.title("🌿 Klasifikasi Hama Tanaman")
-st.write("Unggah foto hama tanaman Anda untuk mengetahui jenisnya.")
+# --- ANTARMUKA PENGGUNA ---
+st.title("🌿 Plant Pest Classifier")
+st.markdown("---")
 
-# Load Model
 model = load_model_streamlit(MODEL_PATH)
 
 if model is None:
-    st.error(f"File model tidak ditemukan di {MODEL_PATH}. Pastikan file .pth sudah diunggah ke folder 'model'.")
+    st.error("Gagal memuat model. Periksa folder `model/` di GitHub Anda.")
 else:
-    uploaded_file = st.file_uploader("Pilih gambar...", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Unggah foto hama tanaman", type=["jpg", "png", "jpeg"])
 
-    if uploaded_file is not None:
-        # Tampilkan Gambar
+    if uploaded_file:
         image = Image.open(uploaded_file).convert('RGB')
-        st.image(image, caption='Gambar yang diunggah', use_container_width=True)
         
-        if st.button('Klasifikasi Sekarang'):
-            with st.spinner('Sedang menganalisis...'):
-                # Proses Prediksi
-                input_tensor = PREPROCESS(image).unsqueeze(0).to(DEVICE)
-                
-                with torch.no_grad():
-                    outputs = model(input_tensor)
-                    probs = F.softmax(outputs, dim=1)
-                    topk = torch.topk(probs, k=3) # Ambil 3 prediksi teratas
-                    
-                    values = topk.values.cpu().numpy()[0]
-                    indices = topk.indices.cpu().numpy()[0]
+        # Tampilkan kolom kiri (gambar) dan kanan (hasil)
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.image(image, caption="Gambar Input", use_container_width=True)
 
-                # Tampilkan Hasil
-                st.success("Hasil Analisis:")
-                for i in range(len(indices)):
-                    name = CLASS_NAMES[indices[i]]
-                    confidence = values[i] * 100
-                    st.write(f"**{name}**: {confidence:.2f}%")
-                    st.progress(int(confidence))
+        with col2:
+            if st.button('Mulai Klasifikasi'):
+                with st.spinner('Menganalisis...'):
+                    # Prediksi
+                    input_tensor = PREPROCESS(image).unsqueeze(0).to(DEVICE)
+                    with torch.no_grad():
+                        outputs = model(input_tensor)
+                        probs = F.softmax(outputs, dim=1)
+                        topk_prob, topk_idx = torch.topk(probs, k=3)
+
+                    st.success("Hasil Prediksi:")
+                    for i in range(3):
+                        p = topk_prob[0][i].item()
+                        idx = topk_idx[0][i].item()
+                        
+                        # Menghindari error jika p > 1.0 karena float precision
+                        confidence = min(p, 1.0) 
+                        
+                        st.write(f"**{CLASS_NAMES[idx]}**")
+                        st.progress(confidence) # Menggunakan float 0.0 - 1.0
+                        st.write(f"Tingkat Keyakinan: {confidence*100:.2f}%")
+
+# --- FOOTER ---
+st.markdown("---")
+st.caption("Pastikan pencahayaan gambar cukup untuk hasil maksimal.")
