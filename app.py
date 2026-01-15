@@ -97,7 +97,7 @@ else:
                     with torch.no_grad():
                         outputs = model(input_tensor)
                         probs = F.softmax(outputs, dim=1)
-                        topk_prob, topk_idx = torch.topk(probs, k=3)
+                        topk_prob, topk_idx = torch.topk(probs, k=5)
 
                     st.success("Hasil Prediksi:")
                     for i in range(3):
