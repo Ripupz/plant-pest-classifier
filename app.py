@@ -64,7 +64,7 @@ def load_model(path: str):
     # Create a mobilenet_v2 architecture
     NUM_CLASSES = 17  # 
 
-    model = models.mobilenet_v2(pretrained=False)
+    model = models.mobilenet_v2(weights=None)
     model.classifier[1] = torch.nn.Linear(1280, NUM_CLASSES)
 
     try:
